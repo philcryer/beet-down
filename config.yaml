@@ -1,0 +1,183 @@
+#plugins: duplicates fetchart embedart scrub chroma albumtypes lastgenre zero permissions inline the ftintitle edit web mbsync missing unimported
+plugins: duplicates fetchart embedart scrub chroma albumtypes lastgenre zero permissions inline the ftintitle edit mbsync missing
+# pip install beets[fetchart,embedart,duplicates,scrub,chroma,albumtypes,lastgenre,zero,permissions,inline,the,ftintitle,edit,mbsync,missing]
+
+# PROD
+directory: ${HOME}/Music
+library: ~/.config/beets/library.db
+
+# TEST
+#directory: ${HOME}/Music-test
+#library: ~/.config/beets/library-test.db
+#verbose: yes
+
+asciify_paths: yes
+threaded: yes
+
+paths:
+  #default: $first_artist/$year - $album%aunique{} [${samplerate_max}-${bitdepth_max}]%if{$media,[$media]}%if{$atypes,[$atypes]}%if{$label,[$label]}%if{$country,[$country]}/$track - $artist - $album%aunique{} - $title
+  default: $albumartist/$album [$year, ${samplerate_max}-${bitdepth_max}]/$track $title
+  comp: Compilations/$album [$year, ${samplerate_max}-${bitdepth_max}]/$track $title
+  albumtype_soundtrack: Soundtracks/$album [$year, ${samplerate_max}-${bitdepth_max}]/$track $title 
+
+album_fields:  
+  samplerate_max: |
+        max = 0
+        for item in items:
+            if item.samplerate > max:
+                max = item.samplerate
+        return int(max/1000)
+
+  bitdepth_max: |
+        max = 0
+        for item in items:
+            if item.bitdepth > max:
+                max = item.bitdepth
+        return int(max)
+
+import:
+  write: yes
+  copy: no
+  move: yes
+  #duplicate_action: keep
+  incremental: yes
+  #incremental: no
+  quiet: yes
+  #quiet: no
+  quiet_fallback: skip
+  timid: no
+  group_albums: no
+  #log: ~/.config/beets/beet.log
+
+#unimported:
+#  ignore_extensions: jpg png
+#  ignore_subdirectories: NonMusic data temp
+
+duplicates:
+  album: yes
+  keys: mb_albumid
+  delete: yes
+  
+match:
+  strong_rec_thresh: 0.16
+  medium_rec_thresh: 0.25
+  rec_gap_thresh: 0.25
+  
+ui:
+  color: yes
+  colors:
+    text_success: green
+    text_warning: yellow
+    text_error: red
+    text_highlight: red
+    text_highlight_minor: lightgray
+    action_default: turquoise
+    action: blue
+    
+replace:
+  '^\.': _
+  '[\x00-\x1f]': _
+  '[<>:"\?\*\|]': ''
+  '[\xE8-\xEB]': e
+  '[\xEC-\xEF]': i
+  '[\xE2-\xE6]': a
+  '[\xF2-\xF6]': o
+  '[\xF8]': o
+  #'\.$': _
+  '\s+$': ''
+
+lastgenre:
+  auto: yes
+  count: 10
+  source: track
+  title_case: yes
+
+zero:
+  fields: comments
+       
+scrub:
+  auto: yes
+
+discogs:
+  index_tracks: yes
+  source_weight: 0.0
+  
+#albumtypes:
+#  types:
+#    - album: 'LP'
+#    - ep: 'EP'
+#    - single: 'Single'
+#    - soundtrack: 'OST'
+#    - live: 'Live'
+#    - compilation: 'Anthology'
+#    - remix: 'Remix'
+#  ignore_va: compilation
+#  bracket: ''
+
+musicbrainz:
+    searchlimit: 5
+    #searchlimit: 10
+  
+the:
+  a: yes
+  the: yes
+
+ftintitle:
+  auto: yes
+  format: feat. {0}
+  
+fetchart:
+  art_filename: cover.jpg
+  minwidth: 250 
+  maxwidth: 1200
+  # enforce_ratio: yes
+  sources: filesystem coverart itunes amazon albumart
+  #sources: filesystem coverart itunes amazon albumart lastfm
+  #lastfm_key: e5bf98d48d651759e5f006f56562dceb
+  # cover_format: JPEG
+   
+embedart:
+  auto: yes
+    
+missing:
+    format: $albumartist - $album - $title
+    count: no
+    total: no
+
+#ignore: .AppleDouble ._* *~ .DS_Store
+
+clutter:
+  - '*.html'
+  - '*.m3u'
+  - '*.txt'
+  - '*.log'
+  - '*.logs'
+  - '*.tags'
+  - '*.url'
+  - '*.gif'
+  - '*.nfo'
+  - '*.jpeg'
+  - '*.sfv'
+  - "*.m3u"
+  - '*.txt'
+  - '*.pdf'
+  - '*.bmp'
+  - '*.cue'
+  - '*.tif'
+  - '*.tiff'
+  - 'Thumbs.DB'
+  - '*.DS_Store'
+  - '*.mediaartlocal'
+  - 'cover.1.jpg'
+  - 'cover.2.jpg'
+  - 'cover.1.png'
+  - 'cover.2.png'
+
+rewrite:
+  artist .*mf doom*.: MF DOOM
+  artist .*jimi hendrix.*: Jimi Hendrix
+  artist The Beasts of Bourbon: Beasts of Bourbon
+
+#web:
+#  host: 0.0.0.0
+#  cors: 'http://localhost:3000'

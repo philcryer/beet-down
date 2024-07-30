@@ -1,0 +1,92 @@
+#!/bin/bash
+
+set -e
+
+################
+## Variables  ##
+################
+# Music directory - where beet will store the imported music
+music_dir="${HOME}/Music"
+# Temporary import directory - working directory for beet-down to operate on
+import_dir="${HOME}/.beet-down"
+# Logitech Media Server support - rescan files to update the server, no to disable
+lms_host="yes" 	
+lms_host_url="http://localhost:9000"
+
+echo "[ ++ ] beet-down starting"
+
+################
+## Check      ##
+################
+echo "[ .. ] check: test that we got an argument"
+if [ -z "$*" ]; then echo "[ !! ] check: no argument found"; exit 1; fi
+echo "[ ok ] check: argument found"
+
+echo "[ .. ] check: test that argument is a directory" 
+if [ ! -d "${1}" ]; then echo "[ !! ] check: argument is not a directory"; exit 1; fi
+echo "[ ok ] check: argument is a directory"
+
+echo "[ .. ] check: test argument for special characters"
+if [ `expr "${1}" : ".*[@#\$%^*+].*"` -gt 0 ]; then echo "[ !! ] check: found special characters in argument, fix and rerun"; exit 1; fi 
+echo "[ ok ] check: argument has no special characters"
+
+echo "[ .. ] check: verify import directory exists, create if neccessary"
+if [ ! -d "${import_dir}" ]; then mkdir -p "${import_dir}"; fi
+echo "[ ok ] check: import directory exists"
+
+echo "[ .. ] check: verify music directory exists, and is writeable"
+if [[ ! -d "${music_dir}" && -w "${music_dir}" ]]; then echo "[ !! ] check: music directory does not exist, or is not writeable"; exit 1; fi
+echo "[ ok ] check: music directory exists, and is writeable"
+
+echo "[ .. ] check: verify trash directory exists, create if neccessary"
+if [ ! -d ${HOME}/.trash ]; then mkdir -p ${HOME}/.trash; fi
+echo "[ ok ] check: trash directory exists"
+ 
+echo "[ .. ] check: determining new music directory name"
+new_dir="$(basename "${1}")"
+echo "[ ok ] check: will import "${new_dir}""
+
+################
+## Import     ##
+################
+echo "[ .. ] import: moving ${new_dir} to import directory"
+if mv "${1}" "${import_dir}"
+#if mv "${new_dir}" "${import_dir}/${new_dir}"
+then
+  echo "[ ok ] import: moved successfully"
+else
+  echo "[ !! ] import: failed to move "${new_dir}" to "${import_dir}""; exit 1
+fi
+
+echo "[ .. ] import: importing ${import_dir}/${new_dir}"
+beet import -A "${import_dir}/${new_dir}"
+echo "[ ok ] import: import of ${import_dir}/${new_dir} complete"
+
+echo "[ .. ] import: importing new files in "${music_dir}" with autotagging"
+beet import "${music_dir}"
+echo "[ ok ] import: importing of "${music_dir}" with autotagging complete"
+
+################
+## Cleanup    ##
+################
+flac_files_count=$(find "${import_dir}/${new_dir}" -type f | grep "*.flac" | wc -l)
+if [[ "$flac_files_count" == "0" ]]; then
+	echo "[ .. ] cleanup: ${flac_files_count} flac files found in ${new_dir}, moving directory to trash"
+	mv "${import_dir}/${new_dir}" ${HOME}/.trash
+	echo "[ ok ] cleanup: directory "${new_dir}" moved to trash"
+else
+	echo "[ !! ] cleanup: directory is not empty, not deleting, fix and rerun"; exit 1
+fi
+
+################
+## Rescan     ##
+################
+if [ "$lms_host" == "yes" ]; then
+	echo "[ .. ] rescan: telling Logitech Media Server - lms to rescan"
+	curl -s "$lms_host_url"/settings/index.html?p0=rescan >/dev/null 2>&1
+	echo "[ ok ] rescan: Logitech Media Server - lms is rescanning"
+fi
+
+echo "[ ++ ] beet-down completed"; echo
+
+exit 0
