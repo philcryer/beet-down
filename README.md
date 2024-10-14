@@ -13,9 +13,11 @@ An opinionated wrapper to help [beets](https://beets.io/) organize your music co
 
 ## Requrements
 
-[Python](https://www.python.org/), [beets](https://beets.io/), beets plugins
+[Python](https://www.python.org/), [beets](https://beets.io/), [beets plugins](https://beets.readthedocs.io/en/stable/plugins/index.html)
 
 ## Installation
+
+You need to have Python installed and pip available, most Linux systems will already have this, otherwise visit [Python](https://www.python.org/), and get setup. Once that's complete, install beets, and the beets plugin
 
 1) beets
 ```bash
